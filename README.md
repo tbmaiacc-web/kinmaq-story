@@ -1,3 +1,12 @@
+---
+title: KINMAQ Story Generator
+emoji: 📅
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # KINMAQ Story Generator
 
 ストーリー画像（ご新規様空き状況）を生成するシンプルなWebアプリです。
@@ -30,9 +39,3 @@ playwright install chromium
 ```bash
 python3 app.py
 ```
-
-ブラウザで開く：
-- **このPC** → http://localhost:5100
-- **スマホ（同じWi-Fi）** → http://[IPアドレス]:5100
-
-IPアドレスは起動時にターミナルに表示されます。
