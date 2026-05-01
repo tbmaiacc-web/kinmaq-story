@@ -11,14 +11,14 @@
   body {
     width: 1080px;
     height: 1920px;
-    background: #F7F5F1;
+    background: {{PAGE_BG}};
     font-family: 'Noto Sans JP', sans-serif;
     overflow: hidden;
   }
 
   /* ── ヘッダー ── */
   .header {
-    background: #0D1B2A;
+    background: {{PRIMARY_COLOR}};
     padding: 52px 72px 48px;
     display: flex;
     justify-content: space-between;
@@ -27,7 +27,7 @@
   .logo-en {
     font-family: 'Montserrat', sans-serif;
     font-weight: 900; font-size: 32px;
-    letter-spacing: 0.18em; color: #C8A96E;
+    letter-spacing: 0.18em; color: {{ACCENT_COLOR}};
   }
   .logo-ja {
     font-size: 13px; font-weight: 400;
@@ -46,7 +46,7 @@
   .date-month {
     font-family: 'Montserrat', sans-serif;
     font-size: 18px; font-weight: 300;
-    color: #C8A96E; letter-spacing: 0.12em;
+    color: {{ACCENT_COLOR}}; letter-spacing: 0.12em;
   }
   .date-weekday {
     font-size: 16px; font-weight: 500;
@@ -56,12 +56,12 @@
   /* ── タイトルゾーン ── */
   .title-zone {
     padding: 64px 72px 52px;
-    border-bottom: 2px solid #E8E4DE;
+    border-bottom: 2px solid {{BORDER_COLOR}};
   }
   .title-label {
     font-family: 'Montserrat', sans-serif;
     font-size: 12px; font-weight: 700; letter-spacing: 0.36em;
-    color: #A8893E; text-transform: uppercase;
+    color: {{ACCENT_DK_COLOR}}; text-transform: uppercase;
     margin-bottom: 18px;
   }
   .title-main {
@@ -69,18 +69,18 @@
     color: #1A2433; line-height: 1.08;
     letter-spacing: -0.02em;
   }
-  .title-main em { font-style: normal; color: #C8A96E; }
+  .title-main em { font-style: normal; color: {{ACCENT_COLOR}}; }
 
   /* 空き数バナー */
   .count-banner {
     margin-top: 32px;
     display: inline-flex; align-items: center; gap: 16px;
-    background: #1A2433; border-radius: 16px;
+    background: {{PRIMARY_COLOR}}; border-radius: 16px;
     padding: 20px 36px;
   }
   .count-num {
     font-family: 'Montserrat', sans-serif;
-    font-size: 80px; font-weight: 900; color: #C8A96E; line-height: 1;
+    font-size: 80px; font-weight: 900; color: {{ACCENT_COLOR}}; line-height: 1;
   }
   .count-text {
     font-size: 24px; font-weight: 700; color: #fff;
@@ -146,21 +146,21 @@
     padding: 0 64px 80px;
   }
   .cta-card {
-    background: #0D1B2A;
+    background: {{PRIMARY_COLOR}};
     border-radius: 24px;
     padding: 48px 56px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 16px 56px rgba(13,27,42,0.2);
+    box-shadow: 0 16px 56px rgba(0,0,0,0.2);
   }
   .cta-eyebrow {
     font-family: 'Montserrat', sans-serif;
     font-size: 11px; font-weight: 700; letter-spacing: 0.32em;
-    color: #C8A96E; text-transform: uppercase; margin-bottom: 10px;
+    color: {{ACCENT_COLOR}}; text-transform: uppercase; margin-bottom: 10px;
   }
   .cta-main { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: 0.02em; }
   .cta-sub  { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.45); margin-top: 8px; }
   .cta-btn  {
-    background: #C8A96E; color: #0D1B2A;
+    background: {{ACCENT_COLOR}}; color: {{PRIMARY_COLOR}};
     font-size: 16px; font-weight: 800; letter-spacing: 0.1em;
     padding: 18px 36px; border-radius: 100px;
     flex-shrink: 0; white-space: nowrap;

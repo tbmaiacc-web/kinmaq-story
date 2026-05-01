@@ -2,18 +2,10 @@
 """
 KINMAQ Story Generator
 ストーリー画像（空き状況）を生成するシンプルなWebアプリ
-
-起動方法:
-  python3 app.py
-
-ブラウザで開く:
-  http://localhost:5100         （このPC）
-  http://[このPCのIP]:5100      （同じWi-Fi内の他の端末）
 """
 
 import json
 import os
-import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -23,19 +15,76 @@ from flask import Flask, jsonify, render_template_string, request, send_file
 # 設定読み込み
 # ──────────────────────────────────────────────
 
-BASE = Path(__file__).parent
-CONFIG_PATH = BASE / "config.json"
+BASE          = Path(__file__).parent
+CONFIG_PATH   = BASE / "config.json"
 TEMPLATE_PATH = BASE / "template.html"
-OUTPUT_DIR = BASE / "output"
+OUTPUT_DIR    = BASE / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-CLINIC_NAME = config.get("clinic_name", "")
-BRAND       = config.get("brand", "KINMAQ")
-BRAND_SUB   = config.get("brand_sub", "Next整体")
-PORT        = int(os.environ.get("PORT", config.get("port", 5100)))
+config    = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+BRAND     = config.get("brand", "KINMAQ")
+BRAND_SUB = config.get("brand_sub", "Next整体")
+PORT      = int(os.environ.get("PORT", config.get("port", 5100)))
 
 WEEKDAY_JA = ["月", "火", "水", "木", "金", "土", "日"]
+
+# ──────────────────────────────────────────────
+# 6院カラースキーム
+# ──────────────────────────────────────────────
+
+BRANCHES = [
+    {
+        "name": "草加院",
+        "primary":    "#1E3A2F",   # ディープフォレストグリーン
+        "accent":     "#C9B882",   # シャンパンゴールド
+        "accent_dk":  "#A89660",
+        "page_bg":    "#F4F7F4",
+        "border":     "#D8E6D8",
+    },
+    {
+        "name": "イオン八潮南院",
+        "primary":    "#2C1F44",   # ディーププラム
+        "accent":     "#C8B87A",   # ウォームゴールド
+        "accent_dk":  "#A89050",
+        "page_bg":    "#F7F5FA",
+        "border":     "#E2DCF0",
+    },
+    {
+        "name": "上尾院",
+        "primary":    "#3C1D26",   # ボルドー
+        "accent":     "#D4957E",   # ローズゴールド
+        "accent_dk":  "#B0705A",
+        "page_bg":    "#FAF5F5",
+        "border":     "#EEE0DC",
+    },
+    {
+        "name": "前橋院",
+        "primary":    "#1E2E40",   # ダークスチールブルー
+        "accent":     "#C89060",   # アンバーコッパー
+        "accent_dk":  "#A87040",
+        "page_bg":    "#F5F7FA",
+        "border":     "#DDE3EA",
+    },
+    {
+        "name": "伊勢崎宮子院",
+        "primary":    "#0D1B2A",   # ネイビー（デフォルト）
+        "accent":     "#C8A96E",   # ゴールド
+        "accent_dk":  "#A8893E",
+        "page_bg":    "#F7F5F1",
+        "border":     "#E8E4DE",
+    },
+    {
+        "name": "取手院",
+        "primary":    "#1A3836",   # ディープティール
+        "accent":     "#88C4B0",   # セージミント
+        "accent_dk":  "#5EA090",
+        "page_bg":    "#F3F8F7",
+        "border":     "#D0E8E2",
+    },
+]
+
+# JSON文字列としてテンプレートに渡す
+BRANCHES_JSON = json.dumps(BRANCHES, ensure_ascii=False)
 
 app = Flask(__name__)
 
@@ -48,12 +97,12 @@ UI_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ brand }} ストーリー生成 — {{ clinic_name }}</title>
+<title>{{ brand }} ストーリー生成</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --navy: #0D1B2A; --gold: #C8A96E; --gold-dk: #A8893E;
+    --primary: #0D1B2A; --accent: #C8A96E; --accent-dk: #A8893E;
     --bg: #F4F5F7; --white: #fff; --border: #E2E5EA;
     --text: #1A2433; --text-sub: #6B7280; --radius: 12px;
   }
@@ -61,12 +110,13 @@ UI_HTML = """<!DOCTYPE html>
 
   /* ヘッダー */
   header {
-    background: var(--navy); padding: 16px 24px;
+    background: var(--primary); padding: 16px 24px;
     display: flex; align-items: center; gap: 12px;
     position: sticky; top: 0; z-index: 10;
+    transition: background 0.4s ease;
   }
-  .brand { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; color: var(--gold); letter-spacing: 0.14em; }
-  .clinic { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; margin-top: 2px; }
+  .hdr-brand { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; color: var(--accent); letter-spacing: 0.14em; transition: color 0.4s; }
+  .hdr-clinic { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; margin-top: 2px; }
 
   /* レイアウト */
   .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; max-width: 960px; margin: 0 auto; }
@@ -76,16 +126,32 @@ UI_HTML = """<!DOCTYPE html>
   .card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
   .card-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
   .card-title .icon { font-size: 18px; }
-  .card-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 18px; }
+  .card-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 16px; }
 
-  /* 院名入力 */
-  .clinic-input-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
-  .clinic-input {
-    flex: 1; font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 700;
-    padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px;
-    outline: none; color: var(--text); background: var(--bg); transition: border-color 0.15s;
+  /* 院選択ドロップダウン */
+  .branch-select-wrap { position: relative; }
+  .branch-select {
+    width: 100%; font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 700;
+    padding: 12px 44px 12px 16px; border: 2px solid var(--border); border-radius: 10px;
+    outline: none; color: var(--text); background: var(--bg);
+    appearance: none; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
   }
-  .clinic-input:focus { border-color: var(--gold); background: #fff; }
+  .branch-select:focus { border-color: var(--accent); background: #fff; }
+  .select-arrow {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; font-size: 12px; color: var(--text-sub);
+  }
+  /* カラースウォッチプレビュー */
+  .color-preview {
+    display: flex; gap: 10px; margin-top: 12px; align-items: center;
+  }
+  .swatch {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.08);
+    flex-shrink: 0; transition: background 0.4s;
+  }
+  .color-label { font-size: 11px; color: var(--text-sub); }
 
   /* スロット行 */
   .slot-row {
@@ -104,9 +170,9 @@ UI_HTML = """<!DOCTYPE html>
     font-size: 11px; font-weight: 700; cursor: pointer; background: #fff;
     color: var(--text-sub); transition: all 0.15s; font-family: inherit;
   }
-  .status-btn.active-ok  { background: #E8F8EE; border-color: #27AE60; color: #1E8A47; }
-  .status-btn.active-few { background: #FEF3E2; border-color: #E67E22; color: #C06010; }
-  .status-btn.active-full{ background: #F0F2F5; border-color: #AAB4BE; color: #6B7280; }
+  .status-btn.active-ok   { background: #E8F8EE; border-color: #27AE60; color: #1E8A47; }
+  .status-btn.active-few  { background: #FEF3E2; border-color: #E67E22; color: #C06010; }
+  .status-btn.active-full { background: #F0F2F5; border-color: #AAB4BE; color: #6B7280; }
   .del-btn {
     width: 28px; height: 28px; border-radius: 50%; border: none;
     background: #F0F2F5; color: #9CA3AF; cursor: pointer; font-size: 16px;
@@ -120,14 +186,22 @@ UI_HTML = """<!DOCTYPE html>
     padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer;
     font-family: inherit; font-weight: 700; font-size: 13px; transition: all 0.15s; }
   .btn-outline { background: #fff; border: 1.5px solid var(--border); color: var(--text); width: 100%; margin-top: 4px; }
-  .btn-outline:hover { border-color: var(--gold); color: var(--gold-dk); }
-  .btn-primary { background: var(--navy); color: var(--gold); width: 100%; font-size: 15px; padding: 16px; margin-top: 8px; }
-  .btn-primary:hover { background: #1a2e45; }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent-dk); }
+  .btn-primary {
+    background: var(--primary); color: var(--accent);
+    width: 100%; font-size: 15px; padding: 16px; margin-top: 8px;
+    transition: background 0.4s, color 0.4s;
+  }
+  .btn-primary:hover { filter: brightness(1.15); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-dl { background: var(--gold); color: var(--navy); flex: 1; font-size: 14px; padding: 14px; text-decoration: none; }
-  .btn-dl:hover { background: var(--gold-dk); }
+  .btn-dl {
+    background: var(--accent); color: var(--primary);
+    flex: 1; font-size: 14px; padding: 14px; text-decoration: none;
+    transition: background 0.4s, color 0.4s;
+  }
+  .btn-dl:hover { filter: brightness(0.9); }
   .btn-regen { background: #fff; border: 1.5px solid var(--border); color: var(--text); padding: 14px 18px; }
-  .btn-regen:hover { border-color: var(--gold); }
+  .btn-regen:hover { border-color: var(--accent); }
 
   /* プレビュー */
   .preview-wrap { position: sticky; top: 84px; }
@@ -145,7 +219,7 @@ UI_HTML = """<!DOCTYPE html>
   /* トースト */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--navy); color: #fff; padding: 12px 24px; border-radius: 100px;
+    background: var(--primary); color: #fff; padding: 12px 24px; border-radius: 100px;
     font-size: 13px; font-weight: 600; transition: transform 0.3s; z-index: 100;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
@@ -153,10 +227,10 @@ UI_HTML = """<!DOCTYPE html>
 </head>
 <body>
 
-<header>
+<header id="main-header">
   <div>
-    <div class="brand">{{ brand }}</div>
-    <div class="clinic">{{ brand_sub }} {{ clinic_name }}</div>
+    <div class="hdr-brand" id="hdr-brand">{{ brand }}</div>
+    <div class="hdr-clinic" id="hdr-clinic">{{ brand_sub }} <span id="hdr-clinic-name">伊勢崎宮子院</span></div>
   </div>
 </header>
 
@@ -164,15 +238,24 @@ UI_HTML = """<!DOCTYPE html>
 
   <!-- 左: 設定 -->
   <div>
+    <!-- 院選択 -->
     <div class="card">
-      <div class="card-title"><span class="icon">🏥</span> 院名</div>
-      <div class="card-desc">画像に表示される院名を入力してください。</div>
-      <div class="clinic-input-wrap">
-        <input class="clinic-input" id="clinic-name-input" type="text"
-               value="{{ clinic_name }}" placeholder="例：伊勢崎宮子院">
+      <div class="card-title"><span class="icon">🏥</span> 院を選択</div>
+      <div class="card-desc">投稿する院を選ぶと、カラーが自動で切り替わります。</div>
+      <div class="branch-select-wrap">
+        <select class="branch-select" id="branch-select" onchange="onBranchChange()">
+          <!-- JSで生成 -->
+        </select>
+        <span class="select-arrow">▼</span>
+      </div>
+      <div class="color-preview">
+        <div class="swatch" id="swatch-primary"></div>
+        <div class="swatch" id="swatch-accent"></div>
+        <span class="color-label" id="color-label">カラーテーマ</span>
       </div>
     </div>
 
+    <!-- 時間枠 -->
     <div class="card" style="margin-top:16px">
       <div class="card-title"><span class="icon">⏰</span> 時間枠の設定</div>
       <div class="card-desc">時刻を入力し、各枠の空き状況を選んでください。</div>
@@ -180,6 +263,7 @@ UI_HTML = """<!DOCTYPE html>
       <button class="btn btn-outline" onclick="addSlot()">＋ 時間枠を追加</button>
     </div>
 
+    <!-- 生成 -->
     <div class="card" style="margin-top:16px">
       <div class="card-title"><span class="icon">🎨</span> 画像を生成</div>
       <div class="card-desc">1080×1920px のストーリー画像を生成します。</div>
@@ -212,6 +296,11 @@ UI_HTML = """<!DOCTYPE html>
 <div class="toast" id="toast"></div>
 
 <script>
+// ── 院データ ──
+const BRANCHES = {{ branches_json }};
+
+let currentBranch = BRANCHES.find(b => b.name === '伊勢崎宮子院') || BRANCHES[0];
+
 let slots = [
   {time:'10:00', status:'available'},
   {time:'11:00', status:'available'},
@@ -225,6 +314,46 @@ const STATUS = {
   full:      {label:'× 満席',    cls:'active-full'},
 };
 
+// ── 初期化 ──
+function init() {
+  const sel = document.getElementById('branch-select');
+  BRANCHES.forEach((b, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = b.name;
+    if (b.name === '伊勢崎宮子院') opt.selected = true;
+    sel.appendChild(opt);
+  });
+  applyTheme(currentBranch);
+  renderSlots();
+}
+
+// ── 院切替 ──
+function onBranchChange() {
+  const idx = parseInt(document.getElementById('branch-select').value);
+  currentBranch = BRANCHES[idx];
+  applyTheme(currentBranch);
+  // プレビューをリセット
+  resetPreview();
+  document.getElementById('actions').style.display = 'none';
+}
+
+// ── テーマ適用 ──
+function applyTheme(b) {
+  const root = document.documentElement;
+  root.style.setProperty('--primary',   b.primary);
+  root.style.setProperty('--accent',    b.accent);
+  root.style.setProperty('--accent-dk', b.accent_dk);
+
+  document.getElementById('hdr-clinic-name').textContent = b.name;
+  document.getElementById('hdr-brand').style.color = b.accent;
+  document.getElementById('swatch-primary').style.background = b.primary;
+  document.getElementById('swatch-accent').style.background  = b.accent;
+  document.getElementById('color-label').textContent =
+    `${b.primary}  ×  ${b.accent}`;
+}
+
+// ── スロット描画 ──
 function renderSlots() {
   const list = document.getElementById('slot-list');
   list.innerHTML = slots.map((s, i) => `
@@ -242,10 +371,7 @@ function renderSlots() {
   `).join('');
 }
 
-function setStatus(i, status) {
-  slots[i].status = status;
-  renderSlots();
-}
+function setStatus(i, status) { slots[i].status = status; renderSlots(); }
 
 function addSlot() {
   const last = slots[slots.length-1]?.time || '09:00';
@@ -260,27 +386,35 @@ function removeSlot(i) {
   renderSlots();
 }
 
+// ── 生成 ──
 async function generate() {
   const btn = document.getElementById('gen-btn');
   btn.disabled = true;
   btn.textContent = '生成中…';
   document.getElementById('actions').style.display = 'none';
   document.getElementById('preview-body').innerHTML =
-    '<div class="ph"><div class="ph-icon" style="animation:spin 1s linear infinite">⏳</div></div>';
+    '<div class="ph"><div class="ph-icon">⏳</div><div class="ph-text">生成中...</div></div>';
 
   try {
-    const clinicName = document.getElementById('clinic-name-input').value.trim();
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({slots, clinic_name: clinicName})
+      body: JSON.stringify({
+        slots,
+        clinic_name:  currentBranch.name,
+        primary:      currentBranch.primary,
+        accent:       currentBranch.accent,
+        accent_dk:    currentBranch.accent_dk,
+        page_bg:      currentBranch.page_bg,
+        border:       currentBranch.border,
+      })
     });
     const data = await res.json();
     if (data.ok) {
       document.getElementById('preview-body').innerHTML =
         `<img src="/output/${data.filename}?t=${Date.now()}" alt="story">`;
       const dl = document.getElementById('dl-btn');
-      dl.href = `/download/${data.filename}`;
+      dl.href     = `/download/${data.filename}`;
       dl.download = data.filename;
       document.getElementById('actions').style.display = 'flex';
       showToast('✓ 生成完了！「画像を保存」でダウンロードしてください');
@@ -311,7 +445,7 @@ function showToast(msg) {
   _toast = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-renderSlots();
+init();
 </script>
 </body>
 </html>"""
@@ -327,7 +461,7 @@ def index():
         UI_HTML,
         brand=BRAND,
         brand_sub=BRAND_SUB,
-        clinic_name=CLINIC_NAME,
+        branches_json=BRANCHES_JSON,
     )
 
 
@@ -338,25 +472,20 @@ def api_generate():
 
         body        = request.get_json()
         slots       = body.get("slots", [])
-        clinic_name = body.get("clinic_name", CLINIC_NAME) or CLINIC_NAME
+        clinic_name = body.get("clinic_name", "伊勢崎宮子院")
+        primary     = body.get("primary",  "#0D1B2A")
+        accent      = body.get("accent",   "#C8A96E")
+        accent_dk   = body.get("accent_dk","#A8893E")
+        page_bg     = body.get("page_bg",  "#F7F5F1")
+        border      = body.get("border",   "#E8E4DE")
         now         = datetime.now()
 
-        # 空き数カウント
         available_count = sum(1 for s in slots if s["status"] == "available")
 
-        # スロットHTML生成
         def slot_html(s):
-            st = s["status"]
+            st       = s["status"]
             time_val = s["time"]
-            if st == "available":
-                label = "空きあり"
-                dot   = ""
-            elif st == "few":
-                label = "残り僅か"
-                dot   = ""
-            else:
-                label = "満席"
-                dot   = ""
+            label    = {"available": "空きあり", "few": "残り僅か", "full": "満席"}.get(st, "")
             return f"""
       <div class="slot-card {st}">
         <div class="slot-time">{time_val}</div>
@@ -369,7 +498,6 @@ def api_generate():
 
         slots_html = "\n".join(slot_html(s) for s in slots)
 
-        # テンプレート読み込み・変数埋め込み
         html = TEMPLATE_PATH.read_text(encoding="utf-8")
         replacements = {
             "{{BRAND}}":           BRAND,
@@ -380,15 +508,18 @@ def api_generate():
             "{{WEEKDAY}}":         WEEKDAY_JA[now.weekday()] + "曜日",
             "{{AVAILABLE_COUNT}}": str(available_count),
             "{{SLOTS}}":           slots_html,
+            "{{PRIMARY_COLOR}}":   primary,
+            "{{ACCENT_COLOR}}":    accent,
+            "{{ACCENT_DK_COLOR}}": accent_dk,
+            "{{PAGE_BG}}":         page_bg,
+            "{{BORDER_COLOR}}":    border,
         }
         for k, v in replacements.items():
             html = html.replace(k, v)
 
-        # 一時HTMLを書き出し
         tmp_html = OUTPUT_DIR / "_tmp_story.html"
         tmp_html.write_text(html, encoding="utf-8")
 
-        # Playwright でスクリーンショット
         filename = f"story_{now.strftime('%Y%m%d_%H%M%S')}.png"
         out_png  = OUTPUT_DIR / filename
 
@@ -435,11 +566,10 @@ if __name__ == "__main__":
         ip = "確認できませんでした"
 
     print(f"\n{'='*44}")
-    print(f"  KINMAQ Story Generator")
-    print(f"  院名: {CLINIC_NAME}")
+    print(f"  KINMAQ Story Generator  6院対応")
     print(f"{'='*44}")
-    print(f"  このPC:         http://localhost:{PORT}")
-    print(f"  同じWi-Fiから: http://{ip}:{PORT}")
+    print(f"  http://localhost:{PORT}")
+    print(f"  http://{ip}:{PORT}")
     print(f"{'='*44}\n")
 
     app.run(host="0.0.0.0", port=PORT, debug=False)
