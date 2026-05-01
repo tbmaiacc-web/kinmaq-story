@@ -297,7 +297,7 @@ UI_HTML = """<!DOCTYPE html>
 
 <script>
 // ── 院データ ──
-const BRANCHES = {{ branches_json }};
+const BRANCHES = {{ branches_json | safe }};
 
 let currentBranch = BRANCHES.find(b => b.name === '伊勢崎宮子院') || BRANCHES[0];
 
