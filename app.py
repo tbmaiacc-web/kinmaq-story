@@ -78,6 +78,15 @@ UI_HTML = """<!DOCTYPE html>
   .card-title .icon { font-size: 18px; }
   .card-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 18px; }
 
+  /* 院名入力 */
+  .clinic-input-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
+  .clinic-input {
+    flex: 1; font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 700;
+    padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px;
+    outline: none; color: var(--text); background: var(--bg); transition: border-color 0.15s;
+  }
+  .clinic-input:focus { border-color: var(--gold); background: #fff; }
+
   /* スロット行 */
   .slot-row {
     display: flex; align-items: center; gap: 10px;
@@ -156,6 +165,15 @@ UI_HTML = """<!DOCTYPE html>
   <!-- 左: 設定 -->
   <div>
     <div class="card">
+      <div class="card-title"><span class="icon">🏥</span> 院名</div>
+      <div class="card-desc">画像に表示される院名を入力してください。</div>
+      <div class="clinic-input-wrap">
+        <input class="clinic-input" id="clinic-name-input" type="text"
+               value="{{ clinic_name }}" placeholder="例：伊勢崎宮子院">
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
       <div class="card-title"><span class="icon">⏰</span> 時間枠の設定</div>
       <div class="card-desc">時刻を入力し、各枠の空き状況を選んでください。</div>
       <div id="slot-list"></div>
@@ -251,10 +269,11 @@ async function generate() {
     '<div class="ph"><div class="ph-icon" style="animation:spin 1s linear infinite">⏳</div></div>';
 
   try {
+    const clinicName = document.getElementById('clinic-name-input').value.trim();
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({slots})
+      body: JSON.stringify({slots, clinic_name: clinicName})
     });
     const data = await res.json();
     if (data.ok) {
@@ -317,9 +336,10 @@ def api_generate():
     try:
         from playwright.sync_api import sync_playwright
 
-        body   = request.get_json()
-        slots  = body.get("slots", [])
-        now    = datetime.now()
+        body        = request.get_json()
+        slots       = body.get("slots", [])
+        clinic_name = body.get("clinic_name", CLINIC_NAME) or CLINIC_NAME
+        now         = datetime.now()
 
         # 空き数カウント
         available_count = sum(1 for s in slots if s["status"] == "available")
@@ -354,7 +374,7 @@ def api_generate():
         replacements = {
             "{{BRAND}}":           BRAND,
             "{{BRAND_SUB}}":       BRAND_SUB,
-            "{{CLINIC_NAME}}":     CLINIC_NAME,
+            "{{CLINIC_NAME}}":     clinic_name,
             "{{DAY}}":             str(now.day).zfill(2),
             "{{MONTH_YEAR}}":      f"{now.month:02d} / {now.year}",
             "{{WEEKDAY}}":         WEEKDAY_JA[now.weekday()] + "曜日",
