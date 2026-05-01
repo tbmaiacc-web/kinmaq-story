@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1920px;
+    background: #F7F5F1;
+    font-family: 'Noto Sans JP', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    background: #0D1B2A;
+    padding: 52px 72px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo-en {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900; font-size: 32px;
+    letter-spacing: 0.18em; color: #C8A96E;
+  }
+  .logo-ja {
+    font-size: 13px; font-weight: 400;
+    color: rgba(255,255,255,0.5); letter-spacing: 0.14em; margin-top: 6px;
+  }
+  .date-block { text-align: right; }
+  .date-day {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900; font-size: 88px;
+    color: #fff; line-height: 1; letter-spacing: -0.04em;
+  }
+  .date-row {
+    display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+    margin-top: 6px;
+  }
+  .date-month {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px; font-weight: 300;
+    color: #C8A96E; letter-spacing: 0.12em;
+  }
+  .date-weekday {
+    font-size: 16px; font-weight: 500;
+    color: rgba(255,255,255,0.55); letter-spacing: 0.18em;
+  }
+
+  /* ── タイトルゾーン ── */
+  .title-zone {
+    padding: 64px 72px 52px;
+    border-bottom: 2px solid #E8E4DE;
+  }
+  .title-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.36em;
+    color: #A8893E; text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .title-main {
+    font-size: 80px; font-weight: 900;
+    color: #1A2433; line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+  .title-main em { font-style: normal; color: #C8A96E; }
+
+  /* 空き数バナー */
+  .count-banner {
+    margin-top: 32px;
+    display: inline-flex; align-items: center; gap: 16px;
+    background: #1A2433; border-radius: 16px;
+    padding: 20px 36px;
+  }
+  .count-num {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 80px; font-weight: 900; color: #C8A96E; line-height: 1;
+  }
+  .count-text {
+    font-size: 24px; font-weight: 700; color: #fff;
+    line-height: 1.35; letter-spacing: 0.04em;
+  }
+  .count-sub {
+    font-size: 13px; font-weight: 400;
+    color: rgba(255,255,255,0.45); letter-spacing: 0.08em;
+  }
+
+  /* ── スロット ── */
+  .slots-zone {
+    padding: 48px 64px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .slot-card {
+    display: flex; align-items: center;
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px 40px;
+    border-left: 8px solid transparent;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .slot-card.available { border-left-color: #27AE60; }
+  .slot-card.few       { border-left-color: #E67E22; }
+  .slot-card.full      { border-left-color: #CDD4DC; background: #F9FAFB; }
+
+  .slot-time {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 52px; font-weight: 800;
+    letter-spacing: 0.02em; min-width: 230px; line-height: 1;
+  }
+  .slot-card.available .slot-time { color: #1A2433; }
+  .slot-card.few       .slot-time { color: #1A2433; }
+  .slot-card.full      .slot-time { color: #B0BBC8; }
+
+  .slot-middle { flex: 1; }
+  .slot-count-text {
+    font-size: 15px; font-weight: 700;
+    color: #E67E22; letter-spacing: 0.06em;
+  }
+
+  .slot-status {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 36px; border-radius: 100px;
+    font-size: 28px; font-weight: 700; letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .slot-status-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .slot-card.available .slot-status { background: #E8F8EE; color: #1E8A47; }
+  .slot-card.available .slot-status-dot { background: #27AE60; }
+  .slot-card.few .slot-status       { background: #FEF3E2; color: #C06010; }
+  .slot-card.few .slot-status-dot   { background: #E67E22; }
+  .slot-card.full .slot-status      { background: #F0F2F5; color: #8A9AAC; }
+  .slot-card.full .slot-status-dot  { background: #CDD4DC; }
+
+  /* ── CTA ── */
+  .cta-zone {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 0 64px 80px;
+  }
+  .cta-card {
+    background: #0D1B2A;
+    border-radius: 24px;
+    padding: 48px 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 16px 56px rgba(13,27,42,0.2);
+  }
+  .cta-eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.32em;
+    color: #C8A96E; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .cta-main { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: 0.02em; }
+  .cta-sub  { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.45); margin-top: 8px; }
+  .cta-btn  {
+    background: #C8A96E; color: #0D1B2A;
+    font-size: 16px; font-weight: 800; letter-spacing: 0.1em;
+    padding: 18px 36px; border-radius: 100px;
+    flex-shrink: 0; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo-en">{{BRAND}}</div>
+    <div class="logo-ja">{{BRAND_SUB}} {{CLINIC_NAME}}</div>
+  </div>
+  <div class="date-block">
+    <div class="date-day">{{DAY}}</div>
+    <div class="date-row">
+      <span class="date-month">{{MONTH_YEAR}}</span>
+      <span class="date-weekday">{{WEEKDAY}}</span>
+    </div>
+  </div>
+</div>
+
+<div class="title-zone">
+  <div class="title-label">TODAY'S AVAILABILITY</div>
+  <div class="title-main">ご新規様<br><em>空き状況</em></div>
+  <div class="count-banner">
+    <div class="count-num">{{AVAILABLE_COUNT}}</div>
+    <div>
+      <div class="count-text">枠 受付中</div>
+      <div class="count-sub">ご予約可能な時間帯</div>
+    </div>
+  </div>
+</div>
+
+<div class="slots-zone">
+  {{SLOTS}}
+</div>
+
+<div class="cta-zone">
+  <div class="cta-card">
+    <div>
+      <div class="cta-eyebrow">RESERVATION</div>
+      <div class="cta-main">ご予約はこちら</div>
+      <div class="cta-sub">プロフィールのリンクからどうぞ</div>
+    </div>
+    <div class="cta-btn">今すぐ予約 →</div>
+  </div>
+</div>
+
+</body>
+</html>
