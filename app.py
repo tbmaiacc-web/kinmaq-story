@@ -128,6 +128,24 @@ UI_HTML = """<!DOCTYPE html>
   .card-title .icon { font-size: 18px; }
   .card-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 16px; }
 
+  /* 満員御礼トグル */
+  .manin-toggle-wrap { margin-top: 16px; }
+  .manin-toggle {
+    width: 100%; padding: 14px 20px; border-radius: 10px;
+    border: 2px solid var(--border); background: #fff;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 700;
+    color: var(--text-sub); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .manin-toggle:hover { border-color: var(--primary); color: var(--primary); }
+  .manin-toggle.active {
+    background: var(--primary); color: var(--accent);
+    border-color: var(--primary);
+  }
+  .manin-toggle.active .manin-toggle-icon { transform: rotate(0deg); }
+  #slot-settings { transition: opacity 0.2s; }
+  #slot-settings.disabled { opacity: 0.35; pointer-events: none; }
+
   /* 院選択ドロップダウン */
   .branch-select-wrap { position: relative; }
   .branch-select {
@@ -255,12 +273,23 @@ UI_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- 満員御礼トグル -->
+    <div class="card manin-toggle-wrap" style="margin-top:16px">
+      <div class="card-title"><span class="icon">🎉</span> 満員御礼モード</div>
+      <div class="card-desc">全枠が埋まった日に使用。時間枠の代わりに「満員御礼」を表示します。</div>
+      <button class="manin-toggle" id="manin-btn" onclick="toggleManin()">
+        <span>満員御礼を表示する</span>
+      </button>
+    </div>
+
     <!-- 時間枠 -->
+    <div id="slot-settings">
     <div class="card" style="margin-top:16px">
       <div class="card-title"><span class="icon">⏰</span> 時間枠の設定</div>
       <div class="card-desc">時刻を入力し、各枠の空き状況を選んでください。</div>
       <div id="slot-list"></div>
       <button class="btn btn-outline" onclick="addSlot()">＋ 時間枠を追加</button>
+    </div>
     </div>
 
     <!-- 生成 -->
@@ -386,6 +415,26 @@ function removeSlot(i) {
   renderSlots();
 }
 
+// ── 満員御礼トグル ──
+let maninMode = false;
+
+function toggleManin() {
+  maninMode = !maninMode;
+  const btn      = document.getElementById('manin-btn');
+  const settings = document.getElementById('slot-settings');
+  if (maninMode) {
+    btn.classList.add('active');
+    btn.innerHTML = '<span>✓ 満員御礼モード ON</span>';
+    settings.classList.add('disabled');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '<span>満員御礼を表示する</span>';
+    settings.classList.remove('disabled');
+  }
+  resetPreview();
+  document.getElementById('actions').style.display = 'none';
+}
+
 // ── 生成 ──
 async function generate() {
   const btn = document.getElementById('gen-btn');
@@ -407,6 +456,7 @@ async function generate() {
         accent_dk:    currentBranch.accent_dk,
         page_bg:      currentBranch.page_bg,
         border:       currentBranch.border,
+        manin:        maninMode,
       })
     });
     const data = await res.json();
@@ -478,6 +528,8 @@ def api_generate():
         accent_dk   = body.get("accent_dk","#A8893E")
         page_bg     = body.get("page_bg",  "#F7F5F1")
         border      = body.get("border",   "#E8E4DE")
+        manin       = body.get("manin",    False)
+        body_class  = "manin" if manin else ""
         now         = datetime.now()
 
         available_count = sum(1 for s in slots if s["status"] == "available")
@@ -513,6 +565,7 @@ def api_generate():
             "{{ACCENT_DK_COLOR}}": accent_dk,
             "{{PAGE_BG}}":         page_bg,
             "{{BORDER_COLOR}}":    border,
+            "{{BODY_CLASS}}":      body_class,
         }
         for k, v in replacements.items():
             html = html.replace(k, v)

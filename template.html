@@ -139,6 +139,42 @@
   .slot-card.full .slot-status      { background: #F0F2F5; color: #8A9AAC; }
   .slot-card.full .slot-status-dot  { background: #CDD4DC; }
 
+  /* ── 満員御礼 ── */
+  .manin-zone { display: none; padding: 64px 72px; text-align: center; }
+  body.manin .manin-zone { display: block; }
+  body.manin .count-banner { display: none; }
+  body.manin .slots-zone   { display: none; }
+
+  .manin-badge {
+    display: inline-block;
+    background: {{PRIMARY_COLOR}};
+    color: {{ACCENT_COLOR}};
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.36em;
+    padding: 8px 24px; border-radius: 100px;
+    text-transform: uppercase; margin-bottom: 40px;
+  }
+  .manin-main {
+    font-size: 112px; font-weight: 900;
+    color: {{PRIMARY_COLOR}}; line-height: 1;
+    letter-spacing: 0.06em; margin-bottom: 40px;
+  }
+  .manin-divider {
+    width: 80px; height: 4px;
+    background: {{ACCENT_COLOR}};
+    border-radius: 2px; margin: 0 auto 40px;
+  }
+  .manin-sub {
+    font-size: 32px; font-weight: 700;
+    color: #3A4560; line-height: 1.7;
+    letter-spacing: 0.04em; margin-bottom: 24px;
+  }
+  .manin-thanks {
+    font-size: 22px; font-weight: 400;
+    color: #8A9AAC; line-height: 1.8;
+    letter-spacing: 0.06em;
+  }
+
   /* ── CTA ── */
   .cta-zone {
     position: absolute;
@@ -167,7 +203,7 @@
   }
 </style>
 </head>
-<body>
+<body class="{{BODY_CLASS}}">
 
 <div class="header">
   <div>
@@ -197,6 +233,14 @@
 
 <div class="slots-zone">
   {{SLOTS}}
+</div>
+
+<div class="manin-zone">
+  <div class="manin-badge">FULLY BOOKED</div>
+  <div class="manin-main">満員御礼</div>
+  <div class="manin-divider"></div>
+  <div class="manin-sub">本日のご予約枠は<br>全て埋まりました</div>
+  <div class="manin-thanks">たくさんのご予約<br>ありがとうございます 🙏</div>
 </div>
 
 <div class="cta-zone">
