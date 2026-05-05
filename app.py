@@ -128,6 +128,34 @@ UI_HTML = """<!DOCTYPE html>
   .card-title .icon { font-size: 18px; }
   .card-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 16px; }
 
+  /* スタッフ画像アップロード */
+  .staff-upload-area {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--bg);
+  }
+  .staff-upload-area:hover { border-color: var(--accent); background: #fff; }
+  .staff-upload-area.has-image { border-style: solid; border-color: var(--accent); padding: 12px; }
+  .staff-upload-icon { font-size: 28px; margin-bottom: 6px; }
+  .staff-upload-label { font-size: 12px; color: var(--text-sub); }
+  .staff-preview-wrap { display: flex; align-items: center; gap: 14px; }
+  .staff-preview-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+  .staff-preview-info { flex: 1; text-align: left; }
+  .staff-preview-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .staff-preview-hint { font-size: 11px; color: var(--text-sub); }
+  .staff-clear-btn { background: none; border: none; cursor: pointer; font-size: 18px; color: #9CA3AF; padding: 4px; }
+  .staff-clear-btn:hover { color: #E53E3E; }
+  #staff-file-input { display: none; }
+  .staff-name-input {
+    width: 100%; margin-top: 12px; padding: 10px 14px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    outline: none; color: var(--text); background: var(--bg);
+    transition: border-color 0.15s;
+  }
+  .staff-name-input:focus { border-color: var(--accent); background: #fff; }
+
   /* 満員御礼トグル */
   .manin-toggle-wrap { margin-top: 16px; }
   .manin-toggle {
@@ -273,6 +301,29 @@ UI_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- スタッフ画像 -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title"><span class="icon">👤</span> スタッフ画像（任意）</div>
+      <div class="card-desc">設定するとストーリー画像にスタッフ写真が表示されます。</div>
+      <input type="file" id="staff-file-input" accept="image/*" onchange="onStaffImageSelected(event)">
+      <div class="staff-upload-area" id="staff-upload-area" onclick="document.getElementById('staff-file-input').click()">
+        <div id="staff-upload-placeholder">
+          <div class="staff-upload-icon">📷</div>
+          <div class="staff-upload-label">タップして画像を選択</div>
+        </div>
+        <div id="staff-preview-content" style="display:none" class="staff-preview-wrap">
+          <img id="staff-preview-img" class="staff-preview-img" src="" alt="">
+          <div class="staff-preview-info">
+            <div class="staff-preview-name" id="staff-preview-name">画像選択済み</div>
+            <div class="staff-preview-hint">タップで変更</div>
+          </div>
+          <button class="staff-clear-btn" onclick="clearStaffImage(event)">✕</button>
+        </div>
+      </div>
+      <input class="staff-name-input" id="staff-name-input" type="text"
+             placeholder="スタッフ名・役職（例：清家雅斗 院長）">
+    </div>
+
     <!-- 満員御礼トグル -->
     <div class="card manin-toggle-wrap" style="margin-top:16px">
       <div class="card-title"><span class="icon">🎉</span> 満員御礼モード</div>
@@ -415,6 +466,33 @@ function removeSlot(i) {
   renderSlots();
 }
 
+// ── スタッフ画像 ──
+let staffImageBase64 = null;
+
+function onStaffImageSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    staffImageBase64 = e.target.result; // "data:image/xxx;base64,..."
+    document.getElementById('staff-preview-img').src = staffImageBase64;
+    document.getElementById('staff-preview-name').textContent = file.name;
+    document.getElementById('staff-upload-placeholder').style.display = 'none';
+    document.getElementById('staff-preview-content').style.display = 'flex';
+    document.getElementById('staff-upload-area').classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearStaffImage(event) {
+  event.stopPropagation();
+  staffImageBase64 = null;
+  document.getElementById('staff-file-input').value = '';
+  document.getElementById('staff-upload-placeholder').style.display = 'block';
+  document.getElementById('staff-preview-content').style.display = 'none';
+  document.getElementById('staff-upload-area').classList.remove('has-image');
+}
+
 // ── 満員御礼トグル ──
 let maninMode = false;
 
@@ -450,13 +528,15 @@ async function generate() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         slots,
-        clinic_name:  currentBranch.name,
-        primary:      currentBranch.primary,
-        accent:       currentBranch.accent,
-        accent_dk:    currentBranch.accent_dk,
-        page_bg:      currentBranch.page_bg,
-        border:       currentBranch.border,
-        manin:        maninMode,
+        clinic_name:   currentBranch.name,
+        primary:       currentBranch.primary,
+        accent:        currentBranch.accent,
+        accent_dk:     currentBranch.accent_dk,
+        page_bg:       currentBranch.page_bg,
+        border:        currentBranch.border,
+        manin:         maninMode,
+        staff_image:   staffImageBase64,
+        staff_name:    document.getElementById('staff-name-input').value.trim(),
       })
     });
     const data = await res.json();
@@ -528,9 +608,11 @@ def api_generate():
         accent_dk   = body.get("accent_dk","#A8893E")
         page_bg     = body.get("page_bg",  "#F7F5F1")
         border      = body.get("border",   "#E8E4DE")
-        manin       = body.get("manin",    False)
-        body_class  = "manin" if manin else ""
-        now         = datetime.now()
+        manin        = body.get("manin",       False)
+        staff_image  = body.get("staff_image", None)
+        staff_name   = body.get("staff_name",  "")
+        body_class   = "manin" if manin else ""
+        now          = datetime.now()
 
         available_count = sum(1 for s in slots if s["status"] == "available")
 
@@ -550,6 +632,20 @@ def api_generate():
 
         slots_html = "\n".join(slot_html(s) for s in slots)
 
+        # スタッフセクションHTML
+        if staff_image:
+            name_parts = staff_name.split() if staff_name else []
+            name_html  = f'<div class="staff-name">{staff_name}</div>' if staff_name else ""
+            staff_section = f"""<div class="staff-section">
+  <img class="staff-photo" src="{staff_image}" alt="staff">
+  <div class="staff-info">
+    <div class="staff-label">STAFF</div>
+    {name_html}
+  </div>
+</div>"""
+        else:
+            staff_section = ""
+
         html = TEMPLATE_PATH.read_text(encoding="utf-8")
         replacements = {
             "{{BRAND}}":           BRAND,
@@ -566,6 +662,7 @@ def api_generate():
             "{{PAGE_BG}}":         page_bg,
             "{{BORDER_COLOR}}":    border,
             "{{BODY_CLASS}}":      body_class,
+            "{{STAFF_SECTION}}":  staff_section,
         }
         for k, v in replacements.items():
             html = html.replace(k, v)
