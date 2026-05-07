@@ -14,6 +14,38 @@
     background: {{PAGE_BG}};
     font-family: 'Noto Sans JP', sans-serif;
     overflow: hidden;
+    position: relative;
+  }
+
+  /* ── スタッフ透かし ── */
+  .staff-watermark-wrap {
+    position: absolute;
+    top: 0; right: 0;
+    width: 75%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .staff-watermark-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    opacity: 0.18;
+  }
+  .staff-watermark-fade {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, {{PAGE_BG}} 15%, transparent 65%),
+      linear-gradient(to top,   {{PAGE_BG}} 8%,  transparent 25%);
+  }
+
+  /* コンテンツを透かしの前面に */
+  .header, .title-zone, .slots-zone, .manin-zone, .cta-zone {
+    position: relative;
+    z-index: 1;
   }
 
   /* ── ヘッダー ── */
@@ -139,33 +171,6 @@
   .slot-card.full .slot-status      { background: #F0F2F5; color: #8A9AAC; }
   .slot-card.full .slot-status-dot  { background: #CDD4DC; }
 
-  /* ── スタッフ ── */
-  .staff-section {
-    display: flex; align-items: center; gap: 28px;
-    padding: 28px 72px 36px;
-  }
-  .staff-photo {
-    width: 120px; height: 120px; border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid {{ACCENT_COLOR}};
-    flex-shrink: 0;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-  }
-  .staff-info { display: flex; flex-direction: column; gap: 6px; }
-  .staff-label {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.32em;
-    color: {{ACCENT_DK_COLOR}}; text-transform: uppercase;
-  }
-  .staff-name {
-    font-size: 28px; font-weight: 700;
-    color: #1A2433; letter-spacing: 0.04em;
-  }
-  .staff-role {
-    font-size: 16px; font-weight: 400;
-    color: #8A9AAC; letter-spacing: 0.06em; margin-top: 2px;
-  }
-
   /* ── 満員御礼 ── */
   .manin-zone { display: none; padding: 64px 72px; text-align: center; }
   body.manin .manin-zone { display: block; }
@@ -232,6 +237,8 @@
 </head>
 <body class="{{BODY_CLASS}}">
 
+{{STAFF_SECTION}}
+
 <div class="header">
   <div>
     <div class="logo-en">{{BRAND}}</div>
@@ -257,8 +264,6 @@
     </div>
   </div>
 </div>
-
-{{STAFF_SECTION}}
 
 <div class="slots-zone">
   {{SLOTS}}

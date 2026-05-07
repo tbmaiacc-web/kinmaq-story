@@ -304,7 +304,7 @@ UI_HTML = """<!DOCTYPE html>
     <!-- スタッフ画像 -->
     <div class="card" style="margin-top:16px">
       <div class="card-title"><span class="icon">👤</span> スタッフ画像（任意）</div>
-      <div class="card-desc">設定するとストーリー画像にスタッフ写真が表示されます。</div>
+      <div class="card-desc">設定するとストーリー画像の右側に大きく半透明で表示されます。</div>
       <input type="file" id="staff-file-input" accept="image/*" onchange="onStaffImageSelected(event)">
       <div class="staff-upload-area" id="staff-upload-area" onclick="document.getElementById('staff-file-input').click()">
         <div id="staff-upload-placeholder">
@@ -632,16 +632,11 @@ def api_generate():
 
         slots_html = "\n".join(slot_html(s) for s in slots)
 
-        # スタッフセクションHTML
+        # スタッフ透かしHTML
         if staff_image:
-            name_parts = staff_name.split() if staff_name else []
-            name_html  = f'<div class="staff-name">{staff_name}</div>' if staff_name else ""
-            staff_section = f"""<div class="staff-section">
-  <img class="staff-photo" src="{staff_image}" alt="staff">
-  <div class="staff-info">
-    <div class="staff-label">STAFF</div>
-    {name_html}
-  </div>
+            staff_section = f"""<div class="staff-watermark-wrap">
+  <img class="staff-watermark-img" src="{staff_image}" alt="staff">
+  <div class="staff-watermark-fade"></div>
 </div>"""
         else:
             staff_section = ""
